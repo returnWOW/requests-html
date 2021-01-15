@@ -505,6 +505,16 @@ class HTML(BaseParser):
         try:
             page = await self.browser.newPage()
 
+            # disble image load
+            await page.setRequestInterception(True)
+            async def intercept(request):
+                if any(request.resourceType == _ for _ in ('image', 'font')):
+                    await request.abort()
+                else:
+                    await request.continue_()
+                    
+            page.on('request', lambda req: asyncio.ensure_future(intercept(req)))
+
             # Wait before rendering the page, to prevent timeouts.
             await asyncio.sleep(wait)
 
